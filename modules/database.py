@@ -1,9 +1,21 @@
 import mysql.connector
 from mysql.connector import Error
 import logging
+import os
 from config import DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, DB_PORT, LOG_FILE, LOG_LEVEL
 
-logging.basicConfig(filename=LOG_FILE, level=getattr(logging, LOG_LEVEL))
+# Create logs directory if it doesn't exist
+log_dir = os.path.dirname(LOG_FILE)
+if log_dir and not os.path.exists(log_dir):
+    os.makedirs(log_dir, exist_ok=True)
+
+# Configure logging with fallback
+try:
+    logging.basicConfig(filename=LOG_FILE, level=getattr(logging, LOG_LEVEL))
+except Exception:
+    # If file logging fails, use console logging
+    logging.basicConfig(level=getattr(logging, LOG_LEVEL))
+    logging.warning(f"Could not write to {LOG_FILE}, using console logging instead")
 logger = logging.getLogger(__name__)
 
 class DatabaseConnection:
