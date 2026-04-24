@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}Return Book - LibraryGenius{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="fw-bold"><i class="fas fa-undo me-2"></i>Return Book</h2>
+            <p class="text-muted">Process a book return</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mx-auto">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="fas fa-book-reader me-2"></i>Return Details</h5>
+                </div>
+                <div class="card-body">
+                    <form id="returnForm">
+                        <div class="mb-3">
+                            <label for="studentId" class="form-label">Student ID</label>
+                            <input type="text" class="form-control" id="studentId" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="bookIsbn" class="form-label">Book ISBN</label>
+                            <input type="text" class="form-control" id="bookIsbn" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="condition" class="form-label">Book Condition</label>
+                            <select class="form-control" id="condition">
+                                <option value="Good">Good</option>
+                                <option value="Fair">Fair</option>
+                                <option value="Damaged">Damaged</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn btn-warning btn-lg w-100">
+                            <i class="fas fa-check-circle me-2"></i>Process Return
+                        </button>
+                    </form>
+
+                    <div id="returnResult" class="mt-3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('returnForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const studentId = document.getElementById('studentId').value.trim();
+    const bookIsbn = document.getElementById('bookIsbn').value.trim();
+    const condition = document.getElementById('condition').value;
+
+    if (!studentId || !bookIsbn) {
+        showAlert('Please fill in all fields', 'warning');
+        return;
+    }
+
+    // First, find the book by ISBN
+    try {
+        const searchResponse = await fetch(`/api/books/search?q=${bookIsbn}`);
+        const searchData = await searchResponse.json();
+
+        if (!searchData.success || searchData.books.length === 0) {
+            showAlert('Book not found', 'danger');
+            return;
+        }
+
+        const book = searchData.books[0];
+
+        // Process return
+        const response = await fetch('/api/return', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                student_id: studentId,
+                book_id: book.book_id,
+                condition: condition
+            })
+        });
+
+        const data = await response.json();
+
+        const resultDiv = document.getElementById('returnResult');
+        if (data.success) {
+            resultDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>Success!</strong> ${data.message}
+                </div>
+            `;
+            // Reset form after 2 seconds
+            setTimeout(() => {
+                document.getElementById('returnForm').reset();
+                resultDiv.innerHTML = '';
+            }, 3000);
+        } else {
+            resultDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <strong>Error:</strong> ${data.message}
+                </div>
+            `;
+        }
+    } catch (error) {
+        showAlert('Error processing return', 'danger');
+    }
+});
+
+function showAlert(message, type) {
+    const alertContainer = document.getElementById('alert-container');
+    alertContainer.innerHTML = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+}
+</script>
+{% endblock %}

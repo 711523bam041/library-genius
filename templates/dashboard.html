@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - LibraryGenius{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="fw-bold"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</h2>
+            <p class="text-muted">Welcome back, {{ session.username }}!</p>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card stat-card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="stat-label">Total Books</div>
+                            <div class="stat-number" id="totalBooks">-</div>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fas fa-book"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card stat-card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="stat-label">Active Borrows</div>
+                            <div class="stat-number" id="activeBorrows">-</div>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fas fa-hand-holding"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card stat-card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="stat-label">Overdue Books</div>
+                            <div class="stat-number" id="overdueBooks">-</div>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card stat-card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="stat-label">Total Students</div>
+                            <div class="stat-number" id="totalStudents">-</div>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h4 class="fw-bold mb-3">Quick Actions</h4>
+        </div>
+        <div class="col-md-3 mb-3">
+            <a href="/books/add" class="btn btn-outline-primary quick-action-btn w-100">
+                <i class="fas fa-plus-circle text-primary"></i>
+                <span class="fw-bold">Add New Book</span>
+            </a>
+        </div>
+        <div class="col-md-3 mb-3">
+            <a href="/borrow" class="btn btn-outline-success quick-action-btn w-100">
+                <i class="fas fa-hand-holding text-success"></i>
+                <span class="fw-bold">Borrow Book</span>
+            </a>
+        </div>
+        <div class="col-md-3 mb-3">
+            <a href="/return" class="btn btn-outline-warning quick-action-btn w-100">
+                <i class="fas fa-undo text-warning"></i>
+                <span class="fw-bold">Return Book</span>
+            </a>
+        </div>
+        <div class="col-md-3 mb-3">
+            <a href="/books" class="btn btn-outline-info quick-action-btn w-100">
+                <i class="fas fa-search text-info"></i>
+                <span class="fw-bold">Search Books</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Recent Transactions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="table-container">
+                <h4 class="fw-bold mb-3"><i class="fas fa-history me-2"></i>Recent Transactions</h4>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Book</th>
+                                <th>Borrow Date</th>
+                                <th>Due Date</th>
+                                <th>Status</th>
+                                <th>Fine</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentTransactions">
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">Loading transactions...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Load dashboard data on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadDashboardStats();
+    loadRecentTransactions();
+});
+
+async function loadDashboardStats() {
+    try {
+        const response = await fetch('/api/dashboard/stats');
+        const data = await response.json();
+        
+        if (data.success) {
+            document.getElementById('totalBooks').textContent = data.stats.total_books || 0;
+            document.getElementById('activeBorrows').textContent = data.stats.active_borrows || 0;
+            document.getElementById('overdueBooks').textContent = data.stats.overdue_books || 0;
+            document.getElementById('totalStudents').textContent = data.stats.total_students || 0;
+        }
+    } catch (error) {
+        console.error('Error loading dashboard stats:', error);
+    }
+}
+
+async function loadRecentTransactions() {
+    try {
+        const response = await fetch('/api/dashboard/recent-transactions?limit=10');
+        const data = await response.json();
+        
+        const tbody = document.getElementById('recentTransactions');
+        
+        if (data.success && data.transactions && data.transactions.length > 0) {
+            tbody.innerHTML = data.transactions.map(tx => {
+                const statusBadge = tx.status === 'Active' ? 'bg-primary' : 
+                                   tx.status === 'Returned' ? 'bg-success' : 'bg-danger';
+                const borrowDate = tx.borrow_date ? new Date(tx.borrow_date).toLocaleDateString() : 'N/A';
+                const dueDate = tx.due_date ? new Date(tx.due_date).toLocaleDateString() : 'N/A';
+                const fine = tx.fine_amount ? '$' + parseFloat(tx.fine_amount).toFixed(2) : '$0.00';
+                
+                return `
+                    <tr>
+                        <td>${tx.student_name || 'Unknown'}</td>
+                        <td>${tx.book_title || 'Unknown'}</td>
+                        <td>${borrowDate}</td>
+                        <td>${dueDate}</td>
+                        <td><span class="badge ${statusBadge}">${tx.status}</span></td>
+                        <td>${fine}</td>
+                    </tr>
+                `;
+            }).join('');
+        } else {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No transactions found</td></tr>';
+        }
+    } catch (error) {
+        console.error('Error loading transactions:', error);
+        document.getElementById('recentTransactions').innerHTML = 
+            '<tr><td colspan="6" class="text-center text-warning">Unable to load transactions. Please refresh the page.</td></tr>';
+    }
+}
+</script>
+{% endblock %}

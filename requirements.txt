@@ -1,0 +1,13 @@
+opencv-python
+pytesseract
+python-dotenv
+requests
+mysql-connector-python
+flask
+flask-cors
+openai
+werkzeug
+pillow
+numpy
+pyzbar
+gunicorn
