@@ -9,5 +9,5 @@ openai
 werkzeug
 pillow
 numpy
-pyzbar
+# pyzbar - Optional: requires libzbar (disabled for deployment)
 gunicorn

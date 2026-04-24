@@ -11,7 +11,9 @@ DB_NAME = os.getenv("DB_NAME", "library_management")
 DB_PORT = int(os.getenv("DB_PORT", "3306"))
 
 # Flask Configuration
-FLASK_SECRET_KEY = os.getenv("FLASK_SECRET_KEY", "your-secret-key-change-in-production")
+FLASK_SECRET_KEY = os.getenv("FLASK_SECRET_KEY", "dev-secret-key-not-for-production")
+FLASK_ENV = os.getenv("FLASK_ENV", "production")
+DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
 # API Keys
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "your-openai-api-key")

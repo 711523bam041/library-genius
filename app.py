@@ -1,11 +1,16 @@
 from flask import Flask, render_template, session, redirect, url_for, request
 from functools import wraps
-from config import FLASK_SECRET_KEY
+from config import FLASK_SECRET_KEY, FLASK_ENV, DEBUG
 from routes.api import api_bp
+import os
 
 # Initialize Flask app
 app = Flask(__name__)
 app.secret_key = FLASK_SECRET_KEY
+
+# Production settings
+app.config['ENV'] = FLASK_ENV
+app.config['DEBUG'] = DEBUG
 
 # Register API blueprint
 app.register_blueprint(api_bp)
